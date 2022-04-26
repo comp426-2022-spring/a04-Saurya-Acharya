@@ -19,10 +19,14 @@ if (args.help || args.h) {
 }
 
 args['port']
+args['debug'] 
+args['log']
+args['help']
+const port = args.port || process.env.port || 5555
+const debug = args.debug || 'false'
+const log = args.log || 'true'
 
-const port = args.port || process.env.PORT || 5000
-
-if (args.log == 'true') {
+if (log == 'true') {
   const WRITESTREAM = fs.createWriteStream('access.log', { flags: 'a' });
   app.use(morgan('combined'), { stream: WRITESTREAM });
 } 
@@ -52,6 +56,15 @@ app.use( (req, res, next) => {
   next();
 })
 
+if (debug){
+  app.get('/app/log/access/', (req, res, next) => {
+  const stmt = db.prepare('SELECT * FROM accessLog').all();
+  res.status(200).json(stmt);
+  })
+  app.get('/app/error/', (req, res, next) => {
+    throw new Error('Error');
+  })
+}
 
 //---> If things break
 
@@ -89,15 +102,6 @@ app.use(function(req, res){
   res.status(404).send('404 NOT FOUND')
 });
 
-if (args.debug || args.d){
-  app.get('/app/log/access/', (req, res, next) => {
-  const stmt = db.prepare('SELECT * FROM accessLog').all();
-  res.status(200).json(stmt);
-  })
-  app.get('/app/error/', (req, res, next) => {
-    throw new Error('Error');
-  })
-}
 
 /*Coin Functions*/
 
