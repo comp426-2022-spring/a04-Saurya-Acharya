@@ -22,15 +22,38 @@ args['port']
 
 const port = args.port || process.env.PORT || 5000
 
-if (args.log == true) {
-  const WRITESTREAM = fs.createWriteStream('FILE', {flags : 'a'});
-  app.use(morgan('FORMAT', { stream: WRITESTREAM }))
-}
+if (args.log == 'true') {
+  const WRITESTREAM = fs.createWriteStream('access.log', { flags: 'a' });
+  app.use(morgan('combined'), { stream: WRITESTREAM });
+} 
 
 // Start an app server
 const server = app.listen(port, () => {
     console.log('App listening on port %PORT%'.replace('%PORT%',port))
 });
+
+
+app.use( (req, res, next) => {
+  let logdata = {
+      remoteaddr: req.ip,
+      remoteuser: req.user,
+      time: Date.now(),
+      method: req.method,
+      url: req.url,
+      protocol: req.protocol,
+      httpversion: req.httpVersion,
+      secure: req.secure,
+      status: res.statusCode,
+      referer: req.headers['referer'],
+      useragent: req.headers['user-agent']
+    }
+  const stmt = db.prepare('INSERT INTO accesslog (remoteaddr, remoteuser, time, method, url,  protocol, httpversion, secure, status, referer, useragent) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
+  const info = stmt.run(logdata.remoteaddr.toString(), logdata.remoteuser, logdata.time, logdata.method.toString(), logdata.url.toString(), logdata.protocol.toString(), logdata.httpversion.toString(), logdata.secure.toString(), logdata.status.toString(), logdata.referer, logdata.useragent.toString())
+  next();
+})
+
+
+//---> If things break
 
 app.get("/app/", (req, res) => {
   res.status(200).end("OK");
@@ -66,38 +89,13 @@ app.use(function(req, res){
   res.status(404).send('404 NOT FOUND')
 });
 
-app.use( (req, res, next) => {
-  let logdata = {
-      remoteaddr: req.ip,
-      remoteuser: req.user,
-      time: Date.now(),
-      method: req.method,
-      url: req.url,
-      protocol: req.protocol,
-      httpversion: req.httpVersion,
-      secure: req.secure,
-      status: res.statusCode,
-      referer: req.headers['referer'],
-      useragent: req.headers['user-agent']
-    }
-  const stmt = db.prepare('INSERT INTO accesslog (remoteaddr, remoteuser, time, method, url,  protocol, httpversion, secure, status, referer, useragent) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
-  const info = stmt.run(logdata.remoteaddr.toString(), logdata.remoteuser, logdata.time, logdata.method.toString(), logdata.url.toString(), logdata.protocol.toString(), logdata.httpversion.toString(), logdata.secure.toString(), logdata.status.toString(), logdata.referer, logdata.useragent.toString())
-  next()
-})
-
-if (args.debug == true) {
-  app.get('/app/log/access', (req, res) => {
-      try {
-          const s = db.prepare('SELECT * FROM accesslog').all()
-          res.status(200).json(s);
-          } catch(er) {
-            console.error(er)
-          }
+if (args.debug || args.d){
+  app.get('/app/log/access/', (req, res, next) => {
+  const stmt = logdb.prepare('SELECT * FROM accessLog').all();
+  res.status(200).json(stmt);
   })
-
-  app.get('/app/error', (req, res) => {
-      res.status(500);
-      throw new Error('Error test successful.');
+  app.get('/app/error/', (req, res, next) => {
+    throw new Error('Error');
   })
 }
 
