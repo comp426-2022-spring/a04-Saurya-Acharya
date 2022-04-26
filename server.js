@@ -82,6 +82,7 @@ if (debug){
   });
 
   app.get("/app/error", (req, res) => {
+    res.status(500)
     throw new Error("Error test successful.")
   })
 }
