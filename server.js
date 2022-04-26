@@ -13,10 +13,10 @@ app.use(express.json());
 const help = (`
 server.js [options]
 
-  --por		Set the port number for the server to listen on. Must be an integer
+  --port		Set the port number for the server to listen on. Must be an integer
               	between 1 and 65535.
 
-  --debug	If set to true, creates endlpoints /app/log/access/ which returns
+  --debug	If set to true, creates endpoints /app/log/access/ which returns
               	a JSON access log from the database and /app/error which throws 
               	an error with the message "Error test successful." Defaults to 
 		false.
