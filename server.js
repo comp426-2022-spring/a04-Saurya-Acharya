@@ -66,6 +66,41 @@ app.use(function(req, res){
   res.status(404).send('404 NOT FOUND')
 });
 
+app.use( (req, res, next) => {
+  let logdata = {
+      remoteaddr: req.ip,
+      remoteuser: req.user,
+      time: Date.now(),
+      method: req.method,
+      url: req.url,
+      protocol: req.protocol,
+      httpversion: req.httpVersion,
+      secure: req.secure,
+      status: res.statusCode,
+      referer: req.headers['referer'],
+      useragent: req.headers['user-agent']
+    }
+  const stmt = db.prepare('INSERT INTO accesslog (remoteaddr, remoteuser, time, method, url,  protocol, httpversion, secure, status, referer, useragent) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
+  const info = stmt.run(logdata.remoteaddr.toString(), logdata.remoteuser, logdata.time, logdata.method.toString(), logdata.url.toString(), logdata.protocol.toString(), logdata.httpversion.toString(), logdata.secure.toString(), logdata.status.toString(), logdata.referer, logdata.useragent.toString())
+  next()
+})
+
+if (args.debug == true) {
+  app.get('/app/log/access', (req, res) => {
+      try {
+          const s = db.prepare('SELECT * FROM accesslog').all()
+          res.status(200).json(s);
+          } catch(er) {
+            console.error(er)
+          }
+  })
+
+  app.get('/app/error', (req, res) => {
+      res.status(500);
+      throw new Error('Error test successful.');
+  })
+}
+
 /*Coin Functions*/
 
 function coinFlip() {
