@@ -43,7 +43,7 @@ const debug = args.debug || 'false'
 const log = args.log || 'true'
 
 if (log == 'true') {
-  const WRITESTREAM = fs.createWriteStream('access.log', { flags: 'a' });
+  const WRITESTREAM = fs.createWriteStream('FILE', { flags: 'a' });
   app.use(morgan('combined'), { stream: WRITESTREAM });
 } 
 
@@ -51,7 +51,6 @@ if (log == 'true') {
 const server = app.listen(port, () => {
     console.log('App listening on port %PORT%'.replace('%PORT%',port))
 });
-
 
 app.use( (req, res, next) => {
   let logdata = {
