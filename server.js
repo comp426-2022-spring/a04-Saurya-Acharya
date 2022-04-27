@@ -73,8 +73,8 @@ if (debug){
     try {
       const stmt = database.prepare('SELECT * FROM accesslog').all()
       res.status(200).json(stmt)
-    }catch{
-      console.error(e)
+    }catch(er){
+      console.error(er)
     }
   });
 
