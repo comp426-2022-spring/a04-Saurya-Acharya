@@ -9,9 +9,6 @@ const args = require('minimist')(process.argv.slice(2))
 const fs = require('fs')
 const md5 = require('md5')
 
-app.use(express.urlencoded({extended: true}));
-app.use(express.json());
-
 const help = (`
 server.js [options]
 
@@ -38,19 +35,19 @@ args['port']
 args['debug'] 
 args['log']
 args['help']
-const port = args.port || process.env.port || 5555
+const port = args.port || process.env.port || 5555;
 const debug = args.debug || 'false'
 const log = args.log || 'true'
 
-if (log == 'true') {
-  const WRITESTREAM = fs.createWriteStream('FILE', { flags: 'a' });
-  app.use(morgan('combined'), { stream: WRITESTREAM });
-} 
-
 // Start an app server
 const server = app.listen(port, () => {
-    console.log('App listening on port %PORT%'.replace('%PORT%',port))
+  console.log('App listening on port %PORT%'.replace('%PORT%',port))
 });
+
+if (log == 'true') {
+  const writeStream = fs.createWriteStream('access.log', { flags: 'a' });
+  app.use(morgan('combined', { stream: writeStream }));
+} 
 
 app.use( (req, res, next) => {
   let logdata = {
